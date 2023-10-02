@@ -4,12 +4,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class User {
 
-    private final int id;
+    private final long id;
     private final SubscriptionType type;
 
     private final AtomicLong credits;
 
-    public User(int id, SubscriptionType type) {
+    public User(long id, SubscriptionType type) {
         this.id = id;
         this.type = type;
         this.credits = new AtomicLong(0L);
@@ -26,4 +26,5 @@ public class User {
     public AtomicLong getCredits() {
         return credits;
     }
+
 }

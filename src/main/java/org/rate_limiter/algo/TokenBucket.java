@@ -26,7 +26,11 @@ public class TokenBucket {
     }
 
     private boolean isRequestAllowed() {
-        return tokens.getAndDecrement() >= 1 || useExtraCreditsIfExist();
+        return decrementCounterIfPositiveThenReturnIfTokenExists() || useExtraCreditsIfExist();
+    }
+
+    private boolean decrementCounterIfPositiveThenReturnIfTokenExists() {
+        return (tokens.longValue() >= 1 && tokens.getAndDecrement() >= 1);
     }
 
     private boolean useExtraCreditsIfExist() {
@@ -45,21 +49,16 @@ public class TokenBucket {
 
         if (tokensToAdd > 0) {
             long capacity = limitConfiguration.capacity();
-            tokens.set(Math.min(capacity, tokens.get() + tokensToAdd));
+            tokens.set(tokensCount(capacity, tokensToAdd));
             lastRefillTime = now;
         }
     }
 
-    public void setExtraTokens(AtomicLong extraTokens) {
-        this.extraTokens = extraTokens;
+    private long tokensCount(long capacity, long tokensToAdd) {
+        return Math.max(0, Math.min(capacity, tokens.get() + tokensToAdd));
     }
 
-    @Override
-    public String toString() {
-        return "TokenBucket{" +
-                "limitConfiguration=" + limitConfiguration +
-                ", tokens=" + tokens +
-                ", lastRefillTime=" + lastRefillTime +
-                "}\n";
+    public void setExtraTokens(AtomicLong extraTokens) {
+        this.extraTokens = extraTokens;
     }
 }

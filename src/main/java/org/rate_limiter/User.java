@@ -7,7 +7,7 @@ public class User {
     private final int id;
     private final SubscriptionType type;
 
-    private AtomicLong credits;
+    private final AtomicLong credits;
 
     public User(int id, SubscriptionType type) {
         this.id = id;
@@ -17,10 +17,6 @@ public class User {
 
     public void addCredits(long extraCredits) {
         this.credits.addAndGet(extraCredits);
-    }
-
-    public int getId() {
-        return id;
     }
 
     public SubscriptionType getType() {

@@ -53,10 +53,9 @@ class TokenBucketRateLimiterTest {
 
     @Test
     void testUserSpecificRateLimiting() {
-        assertTrue(rateLimiter.allowRequest(user1)); // User ID as Integer
-        assertTrue(rateLimiter.allowRequest(user1)); // User ID as Integer
+        assertTrue(rateLimiter.allowRequest(user1));
+        assertTrue(rateLimiter.allowRequest(user1));
 
-        assertTrue(
-                rateLimiter.allowRequest(user2)); // User ID as Integer, User2 has its own rate limit
+        assertTrue(rateLimiter.allowRequest(user2));
     }
 }

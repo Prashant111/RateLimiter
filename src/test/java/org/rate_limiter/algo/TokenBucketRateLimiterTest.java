@@ -41,7 +41,7 @@ class TokenBucketRateLimiterTest {
     }
 
     @Test
-    void testRequestDeniedBeforeGivingItASingleCreditDueToRateLimiting() throws InterruptedException {
+    void testRequestDeniedBeforeGivingItASingleCreditDueToRateLimiting() {
         assertTrue(rateLimiter.allowRequest(user1));
         assertTrue(rateLimiter.allowRequest(user1));
 

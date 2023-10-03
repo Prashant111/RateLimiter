@@ -1,8 +1,8 @@
 package org.rate_limiter.algo;
 
+import org.rate_limiter.RateParams;
 import org.rate_limiter.SubscriptionType;
 import org.rate_limiter.User;
-import org.rate_limiter.RateParams;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,9 +24,8 @@ public class TokenBucketRateLimiter implements RateLimiter {
         TokenBucket bucket = userBuckets.computeIfAbsent(user,
                                                          k -> new TokenBucket(
                                                                  subscriptionTypeLimitConfigurationMap.get(
-                                                                         user.getType()))
+                                                                         user.getType()), user.getPaidCredits())
                                                         );
-        bucket.setExtraTokens(user.getPaidAdditionalRequests());
         return bucket.allowRequest();
     }
 

@@ -95,6 +95,17 @@ class TokenBucketRateLimiterTest {
         freeUser1.addCredits(1L);
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertFalse(rateLimiter.allowRequest(freeUser1));
+        assertFalse(rateLimiter.allowRequest(freeUser1));
+    }
+
+    @Test
+    void testRequestRateLimitingExceededButSavedByExtraCredits() {
+        assertTrue(rateLimiter.allowRequest(freeUser1));
+        assertTrue(rateLimiter.allowRequest(freeUser1));
+        freeUser1.addCredits(2L);
+        assertTrue(rateLimiter.allowRequest(freeUser1));
+        assertTrue(rateLimiter.allowRequest(freeUser1));
+        assertFalse(rateLimiter.allowRequest(freeUser1));
     }
 
     @Test
@@ -175,8 +186,6 @@ class TokenBucketRateLimiterTest {
 
         //All requests limit exhausted
         assertFalse(rateLimiter.allowRequest(freeUser1));
-
-
     }
 
     @Test

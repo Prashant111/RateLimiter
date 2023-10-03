@@ -4,5 +4,6 @@ public enum SubscriptionType {
     FREE_USER,
     BASIC_USER,
     PREMIUM_USER,
-    BUSINESS_USER
+    BUSINESS_USER,
+    CUSTOM_USER,
 }

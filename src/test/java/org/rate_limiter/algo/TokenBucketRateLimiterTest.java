@@ -3,16 +3,20 @@ package org.rate_limiter.algo;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.rate_limiter.RateParams;
+import org.rate_limiter.RateRequest;
 import org.rate_limiter.SubscriptionType;
 import org.rate_limiter.User;
+import org.rate_limiter.exceptions.InvalidRateParams;
+import org.rate_limiter.exceptions.RateParamsUpdateNotAllowedException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.rate_limiter.SubscriptionType.*;
-import static org.rate_limiter.configurations.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
+import static org.rate_limiter.configurations.SubscriptionConfiguration.getSubscriptionTypeRateParamsMap;
+import static org.rate_limiter.configurations.SubscriptionConfiguration.updateSubscriptionConfiguration;
 
 class TokenBucketRateLimiterTest {
     private RateLimiter rateLimiter;
@@ -30,18 +34,6 @@ class TokenBucketRateLimiterTest {
         basicUser = new User(3, BASIC_USER);
         premiumUser = new User(4, PREMIUM_USER);
         businessUser = new User(5, BUSINESS_USER);
-    }
-
-    private void testUserTypeRateLimiting(SubscriptionType subscriptionType, User user) {
-        boolean allRequestAllowed = IntStream.iterate(0, i -> i + 1)
-                                             .limit(getSubscriptionConfigMapping()
-                                                            .get(subscriptionType)
-                                                            .rateRequest()
-                                                            .count())
-                                             .boxed()
-                                             .allMatch(index -> rateLimiter.allowRequest(user));
-        assertTrue(allRequestAllowed);
-        assertFalse(rateLimiter.allowRequest(user));
     }
 
     @Test
@@ -88,11 +80,24 @@ class TokenBucketRateLimiterTest {
         testUserTypeRateLimiting(FREE_USER, freeUser1);
     }
 
+    private void testUserTypeRateLimiting(SubscriptionType subscriptionType, User user) {
+        boolean allRequestAllowed = IntStream.iterate(0, i -> i + 1)
+                                             .limit(getSubscriptionTypeRateParamsMap()
+                                                            .get(subscriptionType)
+                                                            .rateRequest()
+                                                            .count())
+                                             .boxed()
+                                             .allMatch(index -> rateLimiter.allowRequest(user));
+        assertTrue(allRequestAllowed);
+        assertFalse(rateLimiter.allowRequest(user));
+    }
+
     @Test
     void testRequestRateLimitingExceededButSavedByExtraCredit() {
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertTrue(rateLimiter.allowRequest(freeUser1));
         freeUser1.addCredits(1L);
+
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertFalse(rateLimiter.allowRequest(freeUser1));
         assertFalse(rateLimiter.allowRequest(freeUser1));
@@ -103,6 +108,7 @@ class TokenBucketRateLimiterTest {
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertTrue(rateLimiter.allowRequest(freeUser1));
         freeUser1.addCredits(2L);
+
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertTrue(rateLimiter.allowRequest(freeUser1));
         assertFalse(rateLimiter.allowRequest(freeUser1));
@@ -188,6 +194,28 @@ class TokenBucketRateLimiterTest {
         assertFalse(rateLimiter.allowRequest(freeUser1));
     }
 
+
+    @Test
+    void testCustomUser() {
+        User customUser = new User(6, CUSTOM_USER);
+        RateParams rateParams = new RateParams(4, new RateRequest(TimeUnit.SECONDS, 5));
+        updateSubscriptionConfiguration(CUSTOM_USER, rateParams);
+
+        long count = getSubscriptionTypeRateParamsMap().get(CUSTOM_USER)
+                                                       .rateRequest()
+                                                       .count();
+        boolean expectedResponse = IntStream.iterate(0, i -> i + 1)
+                                            .limit(count * 3)
+                                            .allMatch(index ->
+                                                              (index < Math.min(rateParams.capacity(),
+                                                                                rateParams.rateRequest()
+                                                                                          .count()
+                                                                               )) == rateLimiter.allowRequest(
+                                                                      customUser)
+                                                     );
+        assertTrue(expectedResponse);
+    }
+
     @Test
     void testBasicUserRateLimiting() {
         testUserTypeRateLimiting(BASIC_USER, basicUser);
@@ -201,5 +229,34 @@ class TokenBucketRateLimiterTest {
     @Test
     void testBusinessUserRateLimiting() {
         testUserTypeRateLimiting(BUSINESS_USER, businessUser);
+    }
+
+    @Test
+    void testTryingUpdatingPredefinedSubscriptionTypeShouldThrowException() {
+        RateRequest rateRequest = new RateRequest(TimeUnit.SECONDS, 4);
+        RateParams rateParams = new RateParams(50, rateRequest);
+        assertThrows(RateParamsUpdateNotAllowedException.class, () -> updateSubscriptionConfiguration(BASIC_USER,
+                                                                                                      rateParams
+                                                                                                     ));
+    }
+
+    @Test
+    void testTryingUpdatingInvalidCapacityShouldThrowException() {
+        RateRequest rateRequest = new RateRequest(TimeUnit.SECONDS, 4);
+        RateParams rateParams = new RateParams(-10, rateRequest);
+        assertThrows(InvalidRateParams.class, () -> updateSubscriptionConfiguration(CUSTOM_USER, rateParams));
+    }
+
+    @Test
+    void testTryingUpdatingInvalidRateRequestShouldThrowException() {
+        RateParams rateParams = new RateParams(110, null);
+        assertThrows(InvalidRateParams.class, () -> updateSubscriptionConfiguration(CUSTOM_USER, rateParams));
+    }
+
+    @Test
+    void testTryingUpdatingInvalidCountShouldThrowException() {
+        RateRequest rateRequest = new RateRequest(TimeUnit.SECONDS, -10);
+        RateParams rateParams = new RateParams(10, rateRequest);
+        assertThrows(InvalidRateParams.class, () -> updateSubscriptionConfiguration(CUSTOM_USER, rateParams));
     }
 }

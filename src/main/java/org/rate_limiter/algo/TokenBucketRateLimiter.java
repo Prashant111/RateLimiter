@@ -8,14 +8,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.rate_limiter.configurations.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
+import static org.rate_limiter.configurations.SubscriptionConfiguration.getSubscriptionTypeRateParamsMap;
+
 
 public class TokenBucketRateLimiter implements RateLimiter {
     private final Map<SubscriptionType, RateParams> subscriptionTypeLimitConfigurationMap;
     private final ConcurrentMap<User, TokenBucket> userBuckets;
 
     public TokenBucketRateLimiter() {
-        subscriptionTypeLimitConfigurationMap = getSubscriptionConfigMapping();
+        subscriptionTypeLimitConfigurationMap = getSubscriptionTypeRateParamsMap();
         this.userBuckets = new ConcurrentHashMap<>();
     }
 

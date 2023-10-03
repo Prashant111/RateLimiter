@@ -26,7 +26,7 @@ public class TokenBucketRateLimiter implements RateLimiter {
                                                                  subscriptionTypeLimitConfigurationMap.get(
                                                                          user.getType()))
                                                         );
-        bucket.setExtraTokens(user.getCredits());
+        bucket.setExtraTokens(user.getRequestsCredited());
         return bucket.allowRequest();
     }
 

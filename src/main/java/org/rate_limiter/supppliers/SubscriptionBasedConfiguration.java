@@ -17,7 +17,7 @@ public class SubscriptionBasedConfiguration {
                 Map.entry(FREE_USER, new LimitConfiguration(10, 2)),
                 Map.entry(BASIC_USER, new LimitConfiguration(15, 5)),
                 Map.entry(PREMIUM_USER, new LimitConfiguration(100, 20)),
-                Map.entry(BUSINESS_USER, new LimitConfiguration(1000, 500))
+                Map.entry(BUSINESS_USER, new LimitConfiguration(200, 100))
                             );
     }
 }

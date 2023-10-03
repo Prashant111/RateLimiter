@@ -2,16 +2,16 @@ package org.rate_limiter.algo;
 
 import org.rate_limiter.SubscriptionType;
 import org.rate_limiter.User;
-import org.rate_limiter.configurations.LimitConfiguration;
+import org.rate_limiter.RateParams;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.rate_limiter.supppliers.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
+import static org.rate_limiter.configurations.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
 
 public class TokenBucketRateLimiter implements RateLimiter {
-    private final Map<SubscriptionType, LimitConfiguration> subscriptionTypeLimitConfigurationMap;
+    private final Map<SubscriptionType, RateParams> subscriptionTypeLimitConfigurationMap;
     private final ConcurrentMap<User, TokenBucket> userBuckets;
 
     public TokenBucketRateLimiter() {
@@ -26,7 +26,7 @@ public class TokenBucketRateLimiter implements RateLimiter {
                                                                  subscriptionTypeLimitConfigurationMap.get(
                                                                          user.getType()))
                                                         );
-        bucket.setExtraTokens(user.getRequestsCredited());
+        bucket.setExtraTokens(user.getPaidAdditionalRequests());
         return bucket.allowRequest();
     }
 

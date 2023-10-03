@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.rate_limiter.SubscriptionType.*;
-import static org.rate_limiter.supppliers.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
+import static org.rate_limiter.configurations.SubscriptionBasedConfiguration.getSubscriptionConfigMapping;
 
 class TokenBucketRateLimiterTest {
     private RateLimiter rateLimiter;
@@ -36,7 +36,8 @@ class TokenBucketRateLimiterTest {
         boolean allRequestAllowed = IntStream.iterate(0, i -> i + 1)
                                              .limit(getSubscriptionConfigMapping()
                                                             .get(subscriptionType)
-                                                            .tokensAddedPerSecond())
+                                                            .rateRequest()
+                                                            .count())
                                              .boxed()
                                              .allMatch(index -> rateLimiter.allowRequest(user));
         assertTrue(allRequestAllowed);

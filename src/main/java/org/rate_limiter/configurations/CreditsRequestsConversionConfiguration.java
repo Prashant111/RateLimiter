@@ -1,4 +1,4 @@
-package org.rate_limiter.supppliers;
+package org.rate_limiter.configurations;
 
 public class CreditsRequestsConversionConfiguration {
 

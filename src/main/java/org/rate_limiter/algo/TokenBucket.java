@@ -1,20 +1,20 @@
 package org.rate_limiter.algo;
 
-import org.rate_limiter.configurations.LimitConfiguration;
+import org.rate_limiter.RateParams;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TokenBucket {
-    private final LimitConfiguration limitConfiguration;
+    private final RateParams limitConfiguration;
     private final AtomicLong tokens;
     private AtomicLong extraTokens;
     private long lastRefillTime; // Timestamp of the last token replenishment
 
 
-    public TokenBucket(LimitConfiguration limitConfiguration) {
+    public TokenBucket(RateParams limitConfiguration) {
         this.limitConfiguration = limitConfiguration;
-        this.tokens = new AtomicLong(limitConfiguration.tokensAddedPerSecond());
+        this.tokens = new AtomicLong(limitConfiguration.rateRequest()
+                                                       .count());
         this.extraTokens = new AtomicLong(0L);
         this.lastRefillTime = System.nanoTime();
     }
@@ -26,15 +26,15 @@ public class TokenBucket {
     }
 
     private boolean isRequestAllowed() {
-        return decrementCounterIfPositiveThenReturnIfTokenExists() || useExtraCreditsIfExist();
+        return decrementCounterIfPositiveThenReturnIfTokenExists() || useExtraRequestIfExists();
     }
 
     private boolean decrementCounterIfPositiveThenReturnIfTokenExists() {
-        return (tokens.longValue() >= 1 && tokens.getAndDecrement() >= 1);
+        return (tokens.longValue() > 0 && tokens.getAndDecrement() > 0);
     }
 
-    private boolean useExtraCreditsIfExist() {
-        if (extraTokens.get() >= 1) {
+    private boolean useExtraRequestIfExists() {
+        if (extraTokens.get() > 0) {
             extraTokens.decrementAndGet();
             return true;
         }
@@ -44,8 +44,11 @@ public class TokenBucket {
     private void refillTokens() {
         long now = System.nanoTime();
         long timeElapsed = now - lastRefillTime;
-        long fillRate = limitConfiguration.tokensAddedPerSecond();
-        long tokensToAdd = timeElapsed * fillRate / TimeUnit.SECONDS.toNanos(1);
+        long fillRate = limitConfiguration.rateRequest()
+                                          .count();
+        long tokensToAdd = timeElapsed * fillRate / limitConfiguration.rateRequest()
+                                                                      .timeUnit()
+                                                                      .toNanos(1);
 
         if (tokensToAdd > 0) {
             long capacity = limitConfiguration.capacity();
